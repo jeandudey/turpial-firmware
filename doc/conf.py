@@ -52,8 +52,7 @@ exhale_args = {
     # "treeViewIsBootstrap": True,
     "exhaleExecutesDoxygen": True,
     "exhaleDoxygenStdin":    textwrap.dedent(''''
-        INPUT = ../include
-        INPUT += ../lib
+        INPUT = ../lib
         INPUT += ../src
         EXCLUDE = ../src/sdkconfig.h
         ALIASES += "license=\\note"
