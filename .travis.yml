@@ -87,7 +87,7 @@ install:
 
 script:
     - platformio run
-    - travis-sphinx build --source doc/
+    - travis-sphinx build --nowarn --source doc/
 
 after_success:
     - travis-sphinx deploy
