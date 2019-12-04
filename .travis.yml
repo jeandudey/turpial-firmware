@@ -68,13 +68,26 @@
 
 language: python
 python:
-    - "2.7"
+    - "3.8"
 sudo: false
 cache:
     directories:
         - "~/.platformio"
+
+before_install:
+  - sudo apt-get -y install doxygen
+
 install:
+    - pip install -U travis-sphinx
+    - pip install -U sphinx-rtd-theme
+    - pip install -U breathe
+    - pip install -U exhale
     - pip install -U platformio
     - platformio update
+
 script:
     - platformio run
+    - travis-sphinx build --source doc/
+
+after_success:
+    - travis-sphinx deploy
