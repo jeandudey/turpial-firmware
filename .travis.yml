@@ -18,7 +18,7 @@ script:
 - platformio run
 - travis-sphinx build --nowarn --source doc/
 after_success:
-- travis-sphinx deploy
+- travis-sphinx deploy --branches dev
 env:
   global:
     secure: AJfnhyljBORQsr/btc5k6mJ1cNXyuEK8I6XjDB4T5ABFy6lM7YAP1rFZBQk+qh9NauyTqt6+1UJDMAus8L1NFu2OcOtcc5lhXzNJQoCUgQ19Ur5I3Clw1QhRJZh1ZSMkZgvj/nbgdTemKKeMEj5SfKw8t0SHXrDIrvdXtbsHyB3abAPaS5XdgV++n3sccMKxNmoBa0c+gkIbZaHcOV7v2w+envQrAtwLZdYJlaC/dBLcu6gIKjTerfXCykdnJtewkD+zsnvbKVUlk1XPcFpIu+8wSyfS3qqRgSXS0mL1jyLYpsg/YzioTq/4BhTQhoz18DGVmhmP0MmU+GtCGXkV0UaFjuJSA7QBRKC+j94xzBPmu8S2gIPBJ2bcsJcRjgF28eVZDajmro+7sgsl0UTDLM4JC0OrCKZkEaqgVBmOj/KFnkBtXM+EUX7DQFuqxgzUEf/bcGRUw7IDRaC3A2VyEYRFrMroseuSfMjmyQpUUlz/dDwSbU/OImmwy+uPYKlzFy9+w94lS+tfKcmIBwoKvE6ESnHG9EQcHhO2sDdDhppqUBEPSCyrz+FsfkT83CfKbysUe1bHAG5kW16nwwobMmRjtwCLfqsZZB7QZCE04xkRdzw8lOTguENFz8d///rFza6wDMWqLFttweEGErUNVuzdYU4BkyoEIkHxUc5deq8=
