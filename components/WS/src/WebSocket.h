@@ -8,6 +8,7 @@
 #ifndef COMPONENTS_WEBSOCKET_H_
 #define COMPONENTS_WEBSOCKET_H_
 #include "Socket.h"
+#include "WsHandler.h"
 #include <map>
 #include <string>
 
@@ -45,22 +46,6 @@ private:
     uint8_t* m_pMask;
 };
 
-
-// +------------------+
-// | WebSocketHandler |
-// +------------------+
-
-
-class WebSocketHandler
-{
-public:
-    virtual ~WebSocketHandler();
-    virtual void onClose(WebSocket* pWebSocket);
-    virtual void onMessage(WebSocketInputStreambuf* pWebSocketInputStreambuf, WebSocket* pWebSocket);
-    virtual void onError(std::string error);
-};
-
-
 // +-----------+
 // | WebSocket |
 // +-----------+
@@ -93,11 +78,11 @@ public:
     virtual ~WebSocket();
 
     void close(uint16_t status = CLOSE_NORMAL_CLOSURE, std::string message = "");
-    WebSocketHandler* getHandler();
+    ws::Handler* getHandler();
     Socket getSocket();
     void send(std::string data, uint8_t sendType = SEND_TYPE_BINARY);
     void send(uint8_t* data, uint16_t length, uint8_t sendType = SEND_TYPE_BINARY);
-    void setHandler(WebSocketHandler* handler);
+    void setHandler(ws::Handler* handler);
 
 
     inline const ws_list_t& getClients() const { return wsClients; };
@@ -114,7 +99,7 @@ private:
     bool m_receivedClose; // True when we have received a close request.
     bool m_sentClose;     // True when we have sent a close request.
     Socket m_socket;      // Partner socket.
-    WebSocketHandler* m_pWebSocketHandler;
+    ws::Handler* m_handler;
     WebSocketReader* m_pWebSockerReader;
 
 }; // WebSocket

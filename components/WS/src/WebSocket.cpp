@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "WsFrame.h"
+#include "WsHandler.h"
 
 using namespace std;
 
@@ -89,13 +90,13 @@ private:
                 ESP_LOGD("WebSocketReader", "Web socket payload, length=%d:", payloadLen);
             }
 
-            WebSocketHandler* pWebSocketHandler = pWebSocket->getHandler();
+            ws::Handler* handler = pWebSocket->getHandler();
             switch (frame.opcode) {
             case ws::OPCODE_TEXT:
             case ws::OPCODE_BINARY: {
-                if (pWebSocketHandler != nullptr) {
+                if (handler != nullptr) {
                     WebSocketInputStreambuf streambuf(pWebSocket->getSocket(), payloadLen, (frame.mask == 1) ? mask : nullptr);
-                    pWebSocketHandler->onMessage(&streambuf, pWebSocket);
+                    handler->onMessage(&streambuf, pWebSocket);
                     //streambuf.discard();
                 }
                 break;
@@ -104,8 +105,8 @@ private:
             // If the WebSocket operation code is close then we are closing the connection.
             case ws::OPCODE_CLOSE: {
                 pWebSocket->m_receivedClose = true;
-                if (pWebSocketHandler != nullptr) { // If we have a handler, invoke the onClose method upon it.
-                    pWebSocketHandler->onClose(pWebSocket);
+                if (handler != nullptr) { // If we have a handler, invoke the onClose method upon it.
+                    handler->onClose(pWebSocket);
                 }
                 pWebSocket->close(); // Close the websocket.
                 break;
@@ -134,55 +135,6 @@ private:
     } // run
 };    // WebSocketReader
 
-
-/**
- * @brief The default onClose handler.
- * If no over-riding handler is provided for the "close" event, this method is called.
- */
-void WebSocketHandler::onClose(WebSocket* pWebSocket)
-{
-    ESP_LOGI("***************************************************WebSocketHandler", ">> onClose");
-    ESP_LOGI("****************************************************WebSocketHandler", "<< onClose");
-} // onClose
-
-
-/**
- * @brief The default onData handler.
- * If no over-riding handler is provided for the "message" event, this method is called.
- * A particularly useful pattern for using onMessage is:
- * ```
- * std::stringstream buffer;
- * buffer << pWebSocketInputRecordStreambuf;
- * ```
- * This will read the whole message into the string stream.
- */
-void WebSocketHandler::onMessage(WebSocketInputStreambuf* pWebSocketInputStreambuf, WebSocket* pWebSocket)
-{
-    ostream s1(pWebSocketInputStreambuf);
-    s1 << pWebSocketInputStreambuf;
-    s1.rdbuf();
-
-    ESP_LOGI("WebSocketHandler>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", ">> onMessage");
-    ESP_LOGI("WebSocketHandler<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", "<< onMessage");
-
-    stringstream s2;
-    s2 << pWebSocketInputStreambuf;
-
-    std::cout << "-----------------------------------LA SLAIDA ES " << s2.rdbuf()->str() << std::endl;
-    pWebSocket->send("Helloworld", 0x02);
-} // onData
-
-
-/**
- * @brief The default onError handler.
- * If no over-riding handler is provided for the "error" event, this method is called.
- */
-void WebSocketHandler::onError(std::string error)
-{
-    ESP_LOGD("WebSocketHandler", ">> DEFAULT onError: %s", error.c_str());
-} // onError
-
-
 /**
  * @brief Construct a WebSocket instance.
  */
@@ -192,7 +144,7 @@ WebSocket::WebSocket(Socket socket)
     m_sentClose = false;
     m_socket = socket;
     m_pWebSockerReader = new WebSocketReader();
-    m_pWebSocketHandler = nullptr;
+    m_handler = nullptr;
 } // WebSocket
 
 
@@ -249,13 +201,13 @@ void WebSocket::close(uint16_t status, std::string message)
 
 
 /**
- * @brief Get the current WebSocketHandler
+ * @brief Get the current ws::Handler
  * A web socket handler is a user registered class instance that is called when an incoming
  * event received over the network needs to be handled by user code.
  */
-WebSocketHandler* WebSocket::getHandler()
+ws::Handler* WebSocket::getHandler()
 {
-    return m_pWebSocketHandler;
+    return m_handler;
 } // getHandler
 
 
@@ -333,12 +285,12 @@ void WebSocket::send(uint8_t* data, uint16_t length, uint8_t sendType)
  * @brief Set the Web socket handler associated with this Websocket.
  *
  * This will be the user supplied code that will be invoked to process incoming WebSocket
- * events.  An instance of WebSocketHandler is passed in.
+ * events.  An instance of ws::Handler is passed in.
  *
  */
-void WebSocket::setHandler(WebSocketHandler* pHandler)
+void WebSocket::setHandler(ws::Handler* pHandler)
 {
-    m_pWebSocketHandler = pHandler;
+    m_handler = pHandler;
 } // setHandler
 
 
@@ -498,9 +450,3 @@ WebSocketInputStreambuf::int_type WebSocketInputStreambuf::underflow()
 } // underflow
 
 
-/**
- * @brief Destructor.
- */
-WebSocketHandler::~WebSocketHandler()
-{
-} // ~WebSocketHandler()

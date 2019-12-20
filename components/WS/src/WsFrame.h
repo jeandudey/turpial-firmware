@@ -3,7 +3,7 @@
  * @author Locha Mesh Developers (contact@locha.io)
  * @brief
  * @version 0.1
- * @date 2019-11-26
+ * @date 2019-12-20
  *
  * @copyright Copyright (c) 2019 Locha Mesh project developers
  * @license Apache 2.0, see LICENSE file for details
@@ -28,6 +28,7 @@ static const uint8_t OPCODE_PONG = 0x0a;     /*!< Pong. */
  * @brief A WebSocket frame.
  */
 struct Frame {
+    // Byte 0
     std::uint8_t opcode : 4; // [7:4]
     std::uint8_t rsv3 : 1;   // [3]
     std::uint8_t rsv2 : 1;   // [2]
