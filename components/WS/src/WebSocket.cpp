@@ -13,7 +13,7 @@ extern uint16_t lwip_htons(uint16_t);
 extern uint32_t lwip_htonl(uint32_t);
 }
 
-static const char* LOG_TAG = "WebSocket";
+static const char* TAG = "WebSocket";
 ws_list_t wsClients;
 
 
@@ -80,7 +80,7 @@ static void dumpFrame(Frame frame)
     }
     }
     oss << ", Mask: " << (int)frame.mask << ", len: " << (int)frame.len;
-    ESP_LOGD(LOG_TAG, "WebSocket frame: %s", oss.str().c_str());
+    ESP_LOGD(TAG, "WebSocket frame: %s", oss.str().c_str());
 } // dumpFrame
 
 
@@ -278,10 +278,10 @@ WebSocket::~WebSocket()
  */
 void WebSocket::close(uint16_t status, std::string message)
 {
-    ESP_LOGD(LOG_TAG, ">>******close()********: status: %d, message: %s", status, message.c_str());
+    ESP_LOGD(TAG, ">>******close()********: status: %d, message: %s", status, message.c_str());
 
     if (m_sentClose) { // If we have previously sent a close request then we can close the underlying socket.
-        ESP_LOGD(LOG_TAG, "Closing the underlying socket");
+        ESP_LOGD(TAG, "Closing the underlying socket");
         m_socket.close();          // Close the underlying socket.
         m_pWebSockerReader->end(); // Stop the web socket reader.
         return;
@@ -343,7 +343,7 @@ Socket WebSocket::getSocket()
  */
 void WebSocket::send(std::string data, uint8_t sendType)
 {
-    ESP_LOGD(LOG_TAG, ">> send: Length: %d", data.length());
+    ESP_LOGD(TAG, ">> send: Length: %d", data.length());
     Frame frame;
     frame.fin = 1;
     frame.rsv1 = 0;
@@ -360,7 +360,7 @@ void WebSocket::send(std::string data, uint8_t sendType)
         m_socket.send(htons((uint16_t)data.length())); // Convert to network byte order from host byte order
     }
     m_socket.send((uint8_t*)data.data(), data.length());
-    ESP_LOGD(LOG_TAG, "<< send");
+    ESP_LOGD(TAG, "<< send");
 } // send_cpp
 
 
@@ -373,7 +373,7 @@ void WebSocket::send(std::string data, uint8_t sendType)
  */
 void WebSocket::send(uint8_t* data, uint16_t length, uint8_t sendType)
 {
-    ESP_LOGD(LOG_TAG, ">> send: Length: %d", length);
+    ESP_LOGD(TAG, ">> send: Length: %d", length);
     Frame frame;
     frame.fin = 1;
     frame.rsv1 = 0;
@@ -390,7 +390,7 @@ void WebSocket::send(uint8_t* data, uint16_t length, uint8_t sendType)
         m_socket.send(htons(length)); // Convert to network byte order from host byte order
     }
     m_socket.send(data, length);
-    ESP_LOGD(LOG_TAG, "<< send");
+    ESP_LOGD(TAG, "<< send");
 }
 
 
@@ -414,8 +414,8 @@ void WebSocket::setHandler(WebSocketHandler* pHandler)
  */
 void WebSocket::startReader()
 {
-    ESP_LOGD(LOG_TAG, ">>>>>>>>>>>>>>>>>>>>>***reader****************************************");
-    ESP_LOGD(LOG_TAG, ">> startReader: Socket: %s", m_socket.toString().c_str());
+    ESP_LOGD(TAG, ">>>>>>>>>>>>>>>>>>>>>***reader****************************************");
+    ESP_LOGD(TAG, ">> startReader: Socket: %s", m_socket.toString().c_str());
     m_pWebSockerReader->start(this);
 } // startReader
 
