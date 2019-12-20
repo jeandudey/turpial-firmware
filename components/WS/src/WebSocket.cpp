@@ -1,7 +1,7 @@
 #include "WebSocket.h"
 #include "Task.h"
-#include <sstream>
 #include <esp_log.h>
+#include <sstream>
 
 #include <iostream>
 using namespace std;
@@ -106,9 +106,9 @@ public:
 private:
     bool m_end;
     /**
-	 * @brief Loop over the web socket waiting for new input.
-	 * @param [in] data A pointer to an instance of the WebSocket.
-	 */
+     * @brief Loop over the web socket waiting for new input.
+     * @param [in] data A pointer to an instance of the WebSocket.
+     */
     void run(void* data)
     {
         WebSocket* pWebSocket = (WebSocket*)data;
