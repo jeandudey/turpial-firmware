@@ -4,6 +4,9 @@
 #include <sstream>
 
 #include <iostream>
+
+#include "WsFrame.h"
+
 using namespace std;
 
 extern "C" {
@@ -15,74 +18,6 @@ extern uint32_t lwip_htonl(uint32_t);
 
 static const char* TAG = "WebSocket";
 ws_list_t wsClients;
-
-
-// WebSocket op codes as found in a WebSocket frame.
-static const uint8_t OPCODE_CONTINUE = 0x00;
-static const uint8_t OPCODE_TEXT = 0x01;
-static const uint8_t OPCODE_BINARY = 0x02;
-static const uint8_t OPCODE_CLOSE = 0x08;
-static const uint8_t OPCODE_PING = 0x09;
-static const uint8_t OPCODE_PONG = 0x0a;
-
-
-// Structure definition for the WebSocket frame.
-struct Frame {
-    // Byte 0
-    uint8_t opCode : 4; // [7:4]
-    uint8_t rsv3 : 1;   // [3]
-    uint8_t rsv2 : 1;   // [2]
-    uint8_t rsv1 : 1;   // [1]
-    uint8_t fin : 1;    // [0]
-
-    // Byte 1
-    uint8_t len : 7;  // [7:1]
-    uint8_t mask : 1; // [0]
-};
-
-
-/**
- * @brief Dump the content of the WebSocket frame for debugging.
- * @param [in] frame The frame to dump.
- */
-static void dumpFrame(Frame frame)
-{
-    std::ostringstream oss;
-    oss << "Fin: " << (int)frame.fin << ", OpCode: " << (int)frame.opCode;
-    switch (frame.opCode) {
-    case OPCODE_BINARY: {
-        oss << " BINARY";
-        break;
-    }
-    case OPCODE_CONTINUE: {
-        oss << " CONTINUE";
-        break;
-    }
-    case OPCODE_CLOSE: {
-        oss << " CLOSE";
-        break;
-    }
-    case OPCODE_PING: {
-        oss << " PING";
-        break;
-    }
-    case OPCODE_PONG: {
-        oss << " PONG";
-        break;
-    }
-    case OPCODE_TEXT: {
-        oss << " TEXT";
-        break;
-    }
-    default: {
-        oss << " Unknown";
-        break;
-    }
-    }
-    oss << ", Mask: " << (int)frame.mask << ", len: " << (int)frame.len;
-    ESP_LOGD(TAG, "WebSocket frame: %s", oss.str().c_str());
-} // dumpFrame
-
 
 /**
  * @brief A task that will watch web socket inputs.
@@ -116,7 +51,7 @@ private:
 
         Socket peerSocket = pWebSocket->getSocket();
 
-        Frame frame;
+        ws::Frame frame;
         while (true) {
             if (m_end) break;
             ESP_LOGD("WebSocketReader", "Waiting on socket data for socket %s", peerSocket.toString().c_str());
@@ -128,7 +63,7 @@ private:
             }
 
             ESP_LOGD("WebSocketReader", "Received data from web socket.  Length: %d", length);
-            dumpFrame(frame);
+            ws::dumpFrame(frame);
 
             // The following section parses the WebSocket frame.
             uint32_t payloadLen = 0;
@@ -155,9 +90,9 @@ private:
             }
 
             WebSocketHandler* pWebSocketHandler = pWebSocket->getHandler();
-            switch (frame.opCode) {
-            case OPCODE_TEXT:
-            case OPCODE_BINARY: {
+            switch (frame.opcode) {
+            case ws::OPCODE_TEXT:
+            case ws::OPCODE_BINARY: {
                 if (pWebSocketHandler != nullptr) {
                     WebSocketInputStreambuf streambuf(pWebSocket->getSocket(), payloadLen, (frame.mask == 1) ? mask : nullptr);
                     pWebSocketHandler->onMessage(&streambuf, pWebSocket);
@@ -167,7 +102,7 @@ private:
             }
 
             // If the WebSocket operation code is close then we are closing the connection.
-            case OPCODE_CLOSE: {
+            case ws::OPCODE_CLOSE: {
                 pWebSocket->m_receivedClose = true;
                 if (pWebSocketHandler != nullptr) { // If we have a handler, invoke the onClose method upon it.
                     pWebSocketHandler->onClose(pWebSocket);
@@ -176,23 +111,23 @@ private:
                 break;
             }
 
-            case OPCODE_CONTINUE: {
+            case ws::OPCODE_CONTINUE: {
                 break;
             }
 
-            case OPCODE_PING: {
+            case ws::OPCODE_PING: {
                 break;
             }
 
-            case OPCODE_PONG: {
+            case ws::OPCODE_PONG: {
                 break;
             }
 
             default: {
-                ESP_LOGD("WebSocketReader", "Unknown opcode: %d", frame.opCode);
+                ESP_LOGD("WebSocketReader", "Unknown opcode: %d", frame.opcode);
                 break;
             }
-            } // Switch opCode
+            } // Switch opcode
 
         } // while (true)
         ESP_LOGD("WebSocketReader", "<< run");
@@ -288,12 +223,12 @@ void WebSocket::close(uint16_t status, std::string message)
     }
     m_sentClose = true; // Flag that we have sent a close request.
 
-    Frame frame; // Build the web socket frame indicating a close request.
+    ws::Frame frame; // Build the web socket frame indicating a close request.
     frame.fin = 1;
     frame.rsv1 = 0;
     frame.rsv2 = 0;
     frame.rsv3 = 0;
-    frame.opCode = OPCODE_CLOSE;
+    frame.opcode = ws::OPCODE_CLOSE;
     frame.mask = 0;
     frame.len = message.length() + 2;
     int rc = m_socket.send((uint8_t*)&frame, sizeof(frame));
@@ -344,12 +279,12 @@ Socket WebSocket::getSocket()
 void WebSocket::send(std::string data, uint8_t sendType)
 {
     ESP_LOGD(TAG, ">> send: Length: %d", data.length());
-    Frame frame;
+    ws::Frame frame;
     frame.fin = 1;
     frame.rsv1 = 0;
     frame.rsv2 = 0;
     frame.rsv3 = 0;
-    frame.opCode = (sendType == SEND_TYPE_TEXT) ? OPCODE_TEXT : OPCODE_BINARY;
+    frame.opcode = (sendType == SEND_TYPE_TEXT) ? ws::OPCODE_TEXT : ws::OPCODE_BINARY;
     frame.mask = 0;
     if (data.length() < 126) {
         frame.len = data.length();
@@ -374,12 +309,12 @@ void WebSocket::send(std::string data, uint8_t sendType)
 void WebSocket::send(uint8_t* data, uint16_t length, uint8_t sendType)
 {
     ESP_LOGD(TAG, ">> send: Length: %d", length);
-    Frame frame;
+    ws::Frame frame;
     frame.fin = 1;
     frame.rsv1 = 0;
     frame.rsv2 = 0;
     frame.rsv3 = 0;
-    frame.opCode = (sendType == SEND_TYPE_TEXT) ? OPCODE_TEXT : OPCODE_BINARY;
+    frame.opcode = (sendType == SEND_TYPE_TEXT) ? ws::OPCODE_TEXT : ws::OPCODE_BINARY;
     frame.mask = 0;
     if (length < 126) {
         frame.len = length;
